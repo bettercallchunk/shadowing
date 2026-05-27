@@ -14,14 +14,31 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
+  const [abLoop, setAbLoop] = useState<{ start: number | null; end: number | null }>({
+    start: null,
+    end: null
+  });
+  const [abLoopPlaying, setAbLoopPlaying] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleTimeUpdate = () => {
+      const current = audio.currentTime;
+      setCurrentTime(current);
+
+      // A-B循环逻辑
+      if (abLoop.end !== null && current >= abLoop.end) {
+        audio.currentTime = abLoop.start || 0;
+      }
+    };
+
     const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setAbLoopPlaying(false);
+    };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -32,7 +49,7 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, []);
+  }, [abLoop]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -46,6 +63,25 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     setIsPlaying(!isPlaying);
   };
 
+  const toggleABLoopPlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (abLoopPlaying) {
+      audio.pause();
+      setAbLoopPlaying(false);
+      setIsPlaying(false);
+    } else {
+      // 跳到A点开始播放
+      if (abLoop.start !== null) {
+        audio.currentTime = abLoop.start;
+      }
+      audio.play();
+      setAbLoopPlaying(true);
+      setIsPlaying(true);
+    }
+  };
+
   const changeSpeed = (newSpeed: number) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -53,6 +89,23 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     audio.playbackRate = newSpeed;
     setSpeed(newSpeed);
     localStorage.setItem("playbackSpeed", String(newSpeed));
+  };
+
+  const setPointA = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setAbLoop({ ...abLoop, start: audio.currentTime });
+  };
+
+  const setPointB = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setAbLoop({ ...abLoop, end: audio.currentTime });
+  };
+
+  const clearABLoop = () => {
+    setAbLoop({ start: null, end: null });
+    setAbLoopPlaying(false);
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +170,31 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
               {s}x
             </Button>
           ))}
+        </div>
+
+        {/* A-B循环 */}
+        <div className="flex justify-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={setPointA}>
+            设置 A点 {abLoop.start !== null && `(${formatTime(abLoop.start)})`}
+          </Button>
+          <Button variant="outline" size="sm" onClick={setPointB}>
+            设置 B点 {abLoop.end !== null && `(${formatTime(abLoop.end)})`}
+          </Button>
+          {(abLoop.start !== null || abLoop.end !== null) && (
+            <>
+              <Button variant="destructive" size="sm" onClick={clearABLoop}>
+                清除
+              </Button>
+              <Button
+                variant={abLoopPlaying ? "default" : "secondary"}
+                size="sm"
+                onClick={toggleABLoopPlay}
+                disabled={abLoop.start === null || abLoop.end === null}
+              >
+                {abLoopPlaying ? "暂停A-B循环" : "播放A-B循环"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </Card>
