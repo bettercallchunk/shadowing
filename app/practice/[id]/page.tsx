@@ -1,6 +1,7 @@
 import { materials } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { AudioPlayer } from "@/components/audio-player";
+import { Recorder } from "@/components/recorder";
 
 export default async function PracticePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,10 +36,8 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
 
           {/* 录音区域 */}
           <div className="border-t pt-6 mt-6">
-            <h2 className="text-lg font-semibold mb-4">录音</h2>
-            <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-500">
-              录音功能（Day 11 开发）
-            </div>
+            <h2 className="text-lg font-semibold mb-4">跟读录音</h2>
+            <Recorder />
           </div>
         </div>
       </div>
