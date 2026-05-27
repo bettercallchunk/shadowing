@@ -1,14 +1,38 @@
+"use client";
+
 import { materials } from "@/lib/data";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export default function Home() {
+  const [selectedPart, setSelectedPart] = useState<string>("All");
+
+  const filteredMaterials = selectedPart === "All"
+    ? materials
+    : materials.filter(m => m.part === selectedPart);
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-center">雅思口语素材</h1>
 
+        {/* 分类筛选按钮 */}
+        <div className="flex gap-2 mb-6 justify-center flex-wrap">
+          {["All", "Part1", "Part2", "Part3"].map((part) => (
+            <Button
+              key={part}
+              variant={selectedPart === part ? "default" : "outline"}
+              onClick={() => setSelectedPart(part)}
+            >
+              {part}
+            </Button>
+          ))}
+        </div>
+
+        {/* 素材列表 */}
         <div className="grid gap-4">
-          {materials.map((material) => (
+          {filteredMaterials.map((material) => (
             <Card key={material.id} className="p-5 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start">
                 <div>
