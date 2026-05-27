@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2, Play, Pause } from "lucide-react";
+import { Trash2, Play, Pause, GitCompare } from "lucide-react";
 
 interface Recording {
   id: string;
@@ -12,7 +12,11 @@ interface Recording {
   url: string;
 }
 
-export function Recorder() {
+interface RecorderProps {
+  onCompare?: (recordingUrl: string) => void;
+}
+
+export function Recorder({ onCompare }: RecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -76,14 +80,12 @@ export function Recorder() {
 
   const playRecording = (recording: Recording) => {
     if (playingId === recording.id) {
-      // 暂停
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
       setPlayingId(null);
     } else {
-      // 播放
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -149,7 +151,7 @@ export function Recorder() {
             {recordings.map((recording) => (
               <div
                 key={recording.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
               >
                 <Button
                   size="sm"
@@ -163,6 +165,16 @@ export function Recorder() {
                   )}
                 </Button>
                 <span className="flex-1 text-sm">{formatTime(recording.duration)}</span>
+                {onCompare && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onCompare(recording.url)}
+                    title="对比播放"
+                  >
+                    <GitCompare className="w-4 h-4 text-blue-500" />
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"

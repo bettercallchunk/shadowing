@@ -1,14 +1,19 @@
+"use client";
+
 import { materials } from "@/lib/data";
-import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";
 import { AudioPlayer } from "@/components/audio-player";
 import { Recorder } from "@/components/recorder";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
 
-export default async function PracticePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const material = materials.find(m => m.id === id);
+export default function PracticePage() {
+  const params = useParams();
+  const material = materials.find(m => m.id === params.id);
+  const [compareRecordingUrl, setCompareRecordingUrl] = useState<string | undefined>();
 
   if (!material) {
-    notFound();
+    return <div>素材不存在</div>;
   }
 
   return (
@@ -31,13 +36,32 @@ export default async function PracticePage({ params }: { params: Promise<{ id: s
           {/* 音频播放器 */}
           <div className="border-t pt-6">
             <h2 className="text-lg font-semibold mb-4">原声播放</h2>
-            <AudioPlayer audioPath={material.audioPath} />
+            <AudioPlayer
+              audioPath={material.audioPath}
+              recordingUrl={compareRecordingUrl}
+              materialTitle={material.title}
+            />
           </div>
 
           {/* 录音区域 */}
           <div className="border-t pt-6 mt-6">
             <h2 className="text-lg font-semibold mb-4">跟读录音</h2>
-            <Recorder />
+            <Recorder onCompare={setCompareRecordingUrl} />
+
+            {/* 对比播放提示 */}
+            {compareRecordingUrl && (
+              <Card className="mt-4 p-4 bg-blue-50 border-blue-200">
+                <p className="text-sm text-blue-800">
+                  ✓ 已选择录音进行对比。点击上方"同时播放原声和录音"按钮开始对比。
+                  <button
+                    onClick={() => setCompareRecordingUrl(undefined)}
+                    className="ml-2 text-blue-600 underline"
+                  >
+                    取消
+                  </button>
+                </p>
+              </Card>
+            )}
           </div>
         </div>
       </div>

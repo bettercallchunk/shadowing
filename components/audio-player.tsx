@@ -6,10 +6,13 @@ import { Card } from "@/components/ui/card";
 
 interface AudioPlayerProps {
   audioPath: string;
+  recordingUrl?: string;
+  materialTitle?: string;
 }
 
-export function AudioPlayer({ audioPath }: AudioPlayerProps) {
+export function AudioPlayer({ audioPath, recordingUrl, materialTitle }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const recordingAudioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -19,6 +22,8 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     end: null
   });
   const [abLoopPlaying, setAbLoopPlaying] = useState(false);
+  const [originalVolume, setOriginalVolume] = useState(1);
+  const [recordingVolume, setRecordingVolume] = useState(1);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -28,7 +33,6 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
       const current = audio.currentTime;
       setCurrentTime(current);
 
-      // A-B循环逻辑
       if (abLoop.end !== null && current >= abLoop.end) {
         audio.currentTime = abLoop.start || 0;
       }
@@ -57,8 +61,14 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
 
     if (isPlaying) {
       audio.pause();
+      if (recordingAudioRef.current) {
+        recordingAudioRef.current.pause();
+      }
     } else {
       audio.play();
+      if (recordingAudioRef.current && recordingUrl) {
+        recordingAudioRef.current.play();
+      }
     }
     setIsPlaying(!isPlaying);
   };
@@ -69,14 +79,20 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
 
     if (abLoopPlaying) {
       audio.pause();
+      if (recordingAudioRef.current) {
+        recordingAudioRef.current.pause();
+      }
       setAbLoopPlaying(false);
       setIsPlaying(false);
     } else {
-      // 跳到A点开始播放
       if (abLoop.start !== null) {
         audio.currentTime = abLoop.start;
       }
       audio.play();
+      if (recordingAudioRef.current && recordingUrl) {
+        recordingAudioRef.current.currentTime = 0;
+        recordingAudioRef.current.play();
+      }
       setAbLoopPlaying(true);
       setIsPlaying(true);
     }
@@ -129,8 +145,74 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
   return (
     <Card className="p-6">
       <audio ref={audioRef} src={audioPath} />
+      {recordingUrl && (
+        <audio ref={recordingAudioRef} src={recordingUrl} />
+      )}
 
       <div className="space-y-4">
+        {/* 对比播放区域 */}
+        {recordingUrl && (
+          <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+            <h3 className="font-semibold text-sm text-blue-800">对比播放</h3>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="text-xs text-gray-600">原声音量</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={originalVolume}
+                  onChange={(e) => {
+                    const vol = parseFloat(e.target.value);
+                    setOriginalVolume(vol);
+                    if (audioRef.current) audioRef.current.volume = vol;
+                  }}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-gray-600">录音音量</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={recordingVolume}
+                  onChange={(e) => {
+                    const vol = parseFloat(e.target.value);
+                    setRecordingVolume(vol);
+                    if (recordingAudioRef.current) recordingAudioRef.current.volume = vol;
+                  }}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                const audio = audioRef.current;
+                const recAudio = recordingAudioRef.current;
+                if (audio && recAudio) {
+                  audio.currentTime = 0;
+                  recAudio.currentTime = 0;
+                  audio.play();
+                  recAudio.play();
+                  setIsPlaying(true);
+                  audio.onended = () => {
+                    recAudio.pause();
+                    setIsPlaying(false);
+                  };
+                }
+              }}
+            >
+              同时播放原声和录音
+            </Button>
+          </div>
+        )}
+
         {/* 进度条 */}
         <div className="space-y-2">
           <input
