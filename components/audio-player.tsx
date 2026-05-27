@@ -13,6 +13,7 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [speed, setSpeed] = useState(1);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -45,6 +46,15 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     setIsPlaying(!isPlaying);
   };
 
+  const changeSpeed = (newSpeed: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.playbackRate = newSpeed;
+    setSpeed(newSpeed);
+    localStorage.setItem("playbackSpeed", String(newSpeed));
+  };
+
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -60,6 +70,8 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
   return (
     <Card className="p-6">
@@ -91,6 +103,20 @@ export function AudioPlayer({ audioPath }: AudioPlayerProps) {
           >
             {isPlaying ? "暂停" : "播放"}
           </Button>
+        </div>
+
+        {/* 倍速选择 */}
+        <div className="flex justify-center gap-2 flex-wrap">
+          {speeds.map((s) => (
+            <Button
+              key={s}
+              variant={speed === s ? "default" : "outline"}
+              size="sm"
+              onClick={() => changeSpeed(s)}
+            >
+              {s}x
+            </Button>
+          ))}
         </div>
       </div>
     </Card>
