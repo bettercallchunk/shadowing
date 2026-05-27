@@ -4,6 +4,7 @@ import { materials } from "@/lib/data";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const [selectedPart, setSelectedPart] = useState<string>("All");
@@ -33,22 +34,24 @@ export default function Home() {
         {/* 素材列表 */}
         <div className="grid gap-4">
           {filteredMaterials.map((material) => (
-            <Card key={material.id} className="p-5 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                    {material.part}
-                  </span>
-                  <h2 className="text-xl font-semibold mt-2">{material.title}</h2>
-                  {material.text && (
-                    <p className="text-gray-600 mt-2 text-sm line-clamp-2">{material.text}</p>
+            <Link key={material.id} href={`/practice/${material.id}`}>
+              <Card className="p-5 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                      {material.part}
+                    </span>
+                    <h2 className="text-xl font-semibold mt-2">{material.title}</h2>
+                    {material.text && (
+                      <p className="text-gray-600 mt-2 text-sm line-clamp-2">{material.text}</p>
+                    )}
+                  </div>
+                  {material.duration && (
+                    <span className="text-sm text-gray-500">{material.duration}秒</span>
                   )}
                 </div>
-                {material.duration && (
-                  <span className="text-sm text-gray-500">{material.duration}秒</span>
-                )}
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>
